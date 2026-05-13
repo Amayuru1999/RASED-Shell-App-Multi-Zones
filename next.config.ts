@@ -3,13 +3,9 @@ const nextConfig: NextConfig = {
   output: 'standalone',
   experimental: {
     externalDir: true,
+    proxyClientMaxBodySize: '50mb',
   },
   transpilePackages: ['rased-shared-ui'],
-  api: {
-      bodyParser: {
-        sizeLimit: '50mb',
-      },
-    },
   async rewrites() {
     return {
       afterFiles: [

@@ -38,7 +38,10 @@ export default function Dashboard() {
         body: formData,
       })
 
-      const data = (await response.json()) as UploadedDocument | { error?: string }
+      const rawResponse = await response.text()
+      const data = rawResponse
+        ? (JSON.parse(rawResponse) as UploadedDocument | { error?: string })
+        : ({ error: 'Upload failed' } as { error?: string })
 
       if (!response.ok) {
         setUploadError('error' in data && data.error ? data.error : 'Upload failed')
