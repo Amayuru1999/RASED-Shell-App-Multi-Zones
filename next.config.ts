@@ -5,6 +5,11 @@ const nextConfig: NextConfig = {
     externalDir: true,
   },
   transpilePackages: ['rased-shared-ui'],
+  api: {
+      bodyParser: {
+        sizeLimit: '50mb',
+      },
+    },
   async rewrites() {
     return {
       afterFiles: [

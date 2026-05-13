@@ -13,6 +13,7 @@
     "clsx": "^2.1.1",
     "iron-session": "^8.0.4",
     "lucide-react": "^0.503.0",
+    "minio": "^8.0.6",
     "next": "16.2.5",
     "openid-client": "^6.5.0",
     "rased-shared-ui": "file:../rased-shared-ui",

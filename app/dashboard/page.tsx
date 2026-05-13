@@ -1,11 +1,59 @@
 'use client'
 
+import { useState } from 'react'
 import { useAuthStore } from '@/store/authStore'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Activity, Users, FileText, Factory, TrendingUp } from 'lucide-react'
+import { Activity, Users, FileText, Factory, TrendingUp, Upload } from 'lucide-react'
+
+interface UploadedDocument {
+  key: string
+  fileName: string
+  contentType: string
+  size: number
+  url: string
+}
 
 export default function Dashboard() {
   const { user } = useAuthStore()
+  const [selectedFile, setSelectedFile] = useState<File | null>(null)
+  const [isUploading, setIsUploading] = useState(false)
+  const [uploadError, setUploadError] = useState<string | null>(null)
+  const [uploadedDocument, setUploadedDocument] = useState<UploadedDocument | null>(null)
+
+  const handleUpload = async () => {
+    if (!selectedFile || isUploading) {
+      return
+    }
+
+    setUploadError(null)
+    setIsUploading(true)
+
+    try {
+      const formData = new FormData()
+      formData.append('file', selectedFile)
+      formData.append('folder', 'dashboard-documents')
+
+      const response = await fetch('/api/storage/upload', {
+        method: 'POST',
+        body: formData,
+      })
+
+      const data = (await response.json()) as UploadedDocument | { error?: string }
+
+      if (!response.ok) {
+        setUploadError('error' in data && data.error ? data.error : 'Upload failed')
+        return
+      }
+
+      setUploadedDocument(data as UploadedDocument)
+      setSelectedFile(null)
+    } catch (error) {
+      console.error('Upload failed', error)
+      setUploadError('Upload failed. Please try again.')
+    } finally {
+      setIsUploading(false)
+    }
+  }
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -67,8 +115,49 @@ export default function Dashboard() {
           </CardContent>
         </Card>
       </div>
-      
-      {/* Additional dashboard widgets can go here */}
+
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between pb-2">
+          <CardTitle className="text-sm font-medium text-slate-700">Document Storage (MinIO)</CardTitle>
+          <Upload className="h-4 w-4 text-primary" />
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex flex-col sm:flex-row gap-3">
+            <input
+              type="file"
+              accept=".pdf,application/pdf"
+              onChange={(event) => setSelectedFile(event.target.files?.[0] || null)}
+              className="block w-full text-sm text-slate-700 file:mr-4 file:rounded-md file:border-0 file:bg-primary file:px-3 file:py-2 file:text-sm file:font-medium file:text-white hover:file:bg-primary-hover"
+            />
+            <button
+              type="button"
+              onClick={handleUpload}
+              disabled={!selectedFile || isUploading}
+              className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {isUploading ? 'Uploading...' : 'Upload PDF'}
+            </button>
+          </div>
+
+          {uploadError && <p className="text-sm text-red-600">{uploadError}</p>}
+
+          {uploadedDocument && (
+            <div className="rounded-md border border-green-200 bg-green-50 p-3 text-sm text-slate-700">
+              <p className="font-medium text-green-700">Uploaded: {uploadedDocument.fileName}</p>
+              <p className="mt-1">
+                <a
+                  href={uploadedDocument.url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-primary underline underline-offset-2 hover:text-primary-hover"
+                >
+                  Open stored document
+                </a>
+              </p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   )
 }
